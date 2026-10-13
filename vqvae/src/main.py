@@ -46,8 +46,8 @@ train_set = torchvision.datasets.STL10(root="./data", split="train", download=Tr
 test_set  = torchvision.datasets.STL10(root="./data", split="test",  download=True, transform=transform)
 
 batch_size = 64
-train_loader = DataLoader(train_set, batch_size=batch_size, shuffle=True,  num_workers=2, pin_memory=True)
-test_loader  = DataLoader(test_set,  batch_size=batch_size, shuffle=False, num_workers=2, pin_memory=True)
+train_loader = DataLoader(train_set, batch_size=batch_size, shuffle=True,  num_workers=0, pin_memory=True)
+test_loader  = DataLoader(test_set,  batch_size=batch_size, shuffle=False, num_workers=0, pin_memory=True)
 
 if args.data:
     print("Dataset downloaded. Exiting as --data flag was set.")
