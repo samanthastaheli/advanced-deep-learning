@@ -36,7 +36,21 @@ class VQVAE(nn.Module):
         """
         # TODO: Implement the forward pass as described in the instructions.
         ###################################
-        pass
+        # 1. Encode x to get feature map
+        encoded = self.enc(x)
+        encoded_flattened = encoded.flatten(1)
+        # 2. Reshape and permute feature map for VQ layer
+        B, C, H, W = encoded.shape
+        permuted = encoded.permute(0, 2, 3, 1) # reshape (B,C,H,W) to (B,H,W,C)
+        flattened = permuted.reshape(-1, C)
+        # 3. Quantize using VQ layer
+        quantized, indices, commit_loss = self.vq(flattened)
+        # 4. Reshape and permute quantized output back to feature map shape
+        grid = quantized.view(B, H, W, C)
+        quantized_fm_shape = grid.permute(0, 3, 1, 2)
+        # 5. Decode
+        x_hat = self.dec(quantized_fm_shape)
+        reconstruction_loss = F.l1_loss(x_hat, x, reduction="mean")
         
         ###################################
-        # return x_hat, reconstruction_loss + commit_loss, (H*W, self.vq.codebook_size, indices)
+        return x_hat, reconstruction_loss + commit_loss, (H*W, self.vq.codebook_size, indices)
