@@ -66,6 +66,7 @@ class MyVectorQuantizer(nn.Module):
         """
         # Step 1: Prepare inputs
         encoded_latents = encoded_latents.float()
+        print(f"\033[95m encoded_latents shape: {encoded_latents.shape}\033[0m")
         B, N, D = encoded_latents.shape # Shape: (B, N, D)
         flattened_latents = encoded_latents.reshape(-1, D)  # Flatten to (B*N, D) for vectorized ops
         
@@ -80,7 +81,10 @@ class MyVectorQuantizer(nn.Module):
                 Tensor: Distances, shape (B*N, codebook_size).
             """
             # TODO: Implement distance calculation as described in the instructions. 
-            pass
+            z_sq = torch.sum(z ** 2, dim=1, keepdim=True)
+            e_sq = torch.sum(e ** 2, dim=1)
+            euc_dist = z_sq + e_sq - 2 * torch.matmul(z, e.t())
+            return euc_dist
         
         z = flattened_latents
         e = self.embedding.weight
@@ -98,7 +102,9 @@ class MyVectorQuantizer(nn.Module):
                     - nearest_indices_flat (Tensor): Indices of nearest codebook entries, shape (B*N,).
             """
             # TODO: Implement finding nearest codebook vectors as described in the instructions. [Hint: Use argmin()] [One Line Each]
-            pass
+            min_indices = torch.argmin(distances_to_codebook, dim=1) # Find minimum indices
+            quantized_latents = self.embedding.weight[min_indices]
+            return quantized_latents, min_indices
 
         quantized_latents_flat, indices_flat = find_quantized_latents(distances)
         quantized_latents = quantized_latents_flat.view(B, N, D)
@@ -128,7 +134,7 @@ class MyVectorQuantizer(nn.Module):
                     Tensor: Normalized embeddings, shape (codebook_size, D). Think "Mean of vectors assigned to each code".
                 """
                 # TODO: Implement normalization as described in the instructions. [One Line]
-                pass
+                return ema_codebook / (ema_cluster_sizes.unsqueeze(1) + epsilon)
 
             normalized_embeds = normalize_with_ema(self.ema_embeddings, self.ema_cluster_size, self.epsilon)
             self.embedding.weight.data.copy_(normalized_embeds)
@@ -149,7 +155,7 @@ class MyVectorQuantizer(nn.Module):
                 Tensor: Quantized latents with STE applied, shape (B, N, D).
             """
             # TODO: Implement STE as described in the instructions. [Hint: Use detach()] [One Line]
-            pass
+            return encoded_latents + (quantized_latents - encoded_latents).detach()
 
         quantized_latents = apply_ste(quantized_latents, encoded_latents)
         quantized_indices = indices_flat.view(B, N)
