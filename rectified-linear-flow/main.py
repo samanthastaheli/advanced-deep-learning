@@ -156,8 +156,11 @@ def train_rectified_flow(
             batch_size = z1.shape[0]
             # TODO: Part 2
             ########################
-            loss = None
-            pass
+            t = torch.rand((batch_size, 1), device=device)
+            z_t = t * z1 + (1- t) * z0
+            target = z1 - z0
+            pred = rectified_flow(z_t, t)
+            loss = ((pred - target) ** 2).mean() # MSE
             ##########################
 
             optimizer.zero_grad()
@@ -184,7 +187,14 @@ def sample(rectified_flow, T, pi_0_path):
     samples = [pi_0_path.clone().unsqueeze(0)]
     # TODO: Part 3
     #####################
-    pass
+    z = pi_0_path.clone()
+    dt = 1.0 / T
+    with torch.no_grad():
+        for i in range(T):
+            t = torch.ones((batch_size, 1), device=pi_0_path.device) * i / T
+            z = z + rectified_flow(z, t) * dt
+            samples.append(z.clone().unsqueeze(0))
+    return torch.cat(samples, dim=0) # [T+1, B, features]
     ####################
 
 
@@ -203,8 +213,13 @@ def train_rectified_flow_mnist(
         for batch_idx, (z1, _) in enumerate(train_dataloader):
             # TODO: Part 4
             ##############
-            loss = None
-            pass
+            z1 = z1.to(device)
+            z0 = torch.rand_like(z1)
+            t = torch.rand(z1.shape[0], 1, device=device)
+            t_b = t.view(-1, 1, 1, 1) # broadcast 
+            z_t = t_b * z1 + (1- - t_b) * z0
+            pred = rectified_flow(z_t, t)
+            loss = nn.functional.mse_loss(pred, z1 - z0)
             ##############
 
             optimizer.zero_grad()
@@ -378,7 +393,11 @@ if __name__ == "__main__":
     os.makedirs("./images", exist_ok=True)
 
     # --- Constants ---
-    device = "cuda"
+    # device = "cuda"
+    if torch.cuda.is_available():
+        device = "cuda"
+    else:
+        device = "cpu"
     batch_size = 2048
     dataset_size = 10_000
     nb_epochs = 500
