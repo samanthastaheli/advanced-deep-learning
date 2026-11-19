@@ -16,8 +16,6 @@ Currently there are state of the art agents such as
 
 Convolutional neural network (CNN) and multilayer perceptron (MLP) are architecture types that I will be implementing. Deep Q-Network (DQN) and Proximal Policy Optimization (PPO) are reinforcement learning approaches that I will use to solve the problem. The question I am asking is, which policy, CNN-DQN, MLP-DQN, CNN-PPO, or MPL-PPO performs the best given a farm grid?
 
-My hypothesis is that the CNN policy will make better use of the grid’s spatial structure and will retain more of its performance when obstacle layouts differ from those seen during training.
-
 ## What data is required? Is it already available, or do you need to collect it?
 
 There is no predefined dataset that is required for RL agents. RL agents create their own dataset in real time using their functions. 
